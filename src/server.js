@@ -35,6 +35,47 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 
+// Set the connection to the database
+const mongoose = require('mongoose');
+var databaseURL = "";
+switch (process.env.NODE_ENV.toLowerCase()) {
+  case "test":
+    databaseURL = "mongodb://localhost:27017/ExpressBuildAnAPI-test";
+    break;
+  case "development":
+    databaseURL = "mongodb://localhost:27017/ExpressBuildAnAPI-dev";
+    break;
+  case "production":
+    databaseURL = process.env.DATABASE_URL;
+    break;
+  default:
+    console.error("Incorrect JS environment specified, database will not be connected.");
+    break;
+}
+
+const {databaseConnector} = require("./database");
+databaseConnector(databaseURL).then(() => {
+  console.log("Database connected successfully!");
+}).catch(error => {
+  console.log(`An error occurred connecting to the database. It was: ${error}`);
+});
+
+// Return useful details from the database connection
+app.get("/databaseHealth", (request, response) => {
+  let databaseState = mongoose.connection.readyState;
+  let databaseName = mongoose.connection.name;
+  let databaseModels = mongoose.connection.modelNames();
+  let databaseHost = mongoose.connection.host;
+
+  response.json({
+      readyState: databaseState,
+      dbName: databaseName,
+      dbModels: databaseModels,
+      dbHost: databaseHost
+  })
+});
+
+
 // Add a route to ensure the app works. This path is the server API's "homepage"
 app.get("/", (request, response) => {
   response.json({
