@@ -78,8 +78,11 @@ app.get("/databaseHealth", (request, response) => {
 const rolesController = require('./controllers/RoleRoutes');
 app.use("/roles", rolesController);
 
-const usersController = require("./controllers/UserRoutes");
+const usersController = require('./controllers/UserRoutes');
 app.use("/users", usersController);
+
+const postsController = require('./controllers/PostRoutes');
+app.use("/posts", postsController);
 
 app.get("/databaseDump", async (request, response) => {
   // Set up an object to store our data.

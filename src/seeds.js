@@ -10,30 +10,61 @@ const { Post } = require('./models/PostModel');
 const dotenv = require('dotenv');
 dotenv.config();
 
+// Import the hashString function for hashed user passwords
+const { hashString } = require('./controllers/UserFunctions');
+
 // Create some raw data for the Roles collection, obeying the required fields from the Role schema
 const roles = [
-    {
-        name: "regular",
-        description:"A regular user can view, create and read data. They can only edit and delete their own data."
-    },
-    {
-        name: "admin",
-        description:"An admin user has full access and permissions to do anything and everything within this API."
-    },
-    {
-        name:"banned",
-        description:"A banned user can read data, but cannot do anything else."
-    }
+  {
+    name: "regular",
+    description:"A regular user can view, create and read data. They can only edit and delete their own data."
+  },
+  {
+    name: "admin",
+    description:"An admin user has full access and permissions to do anything and everything within this API."
+  },
+  {
+    name:"banned",
+    description:"A banned user can read data, but cannot do anything else."
+  }
 ]
 
 // To fill in after creating user data encryption functionality.
 const users = [
+  {
+    username: "seedUser1",
+    email:"seed1@email.com",
+    password: null,
+    country:"Australia",
+    role: null
+  },
+  {
+    username: "seedUser2",
+    email:"seed2@email.com",
+    password: null,
+    country:"TheBestOne",
+    role: null
+}
 
 ];
 
 // To fill in after creating users successfully.
 const posts = [
-
+  {
+  title: "Seeded post one",
+  description: "This is the first seeded post.",
+  author: null
+},
+{
+  title: "The second seeded post",
+  description: "This is the second seeded post.",
+  author: null
+},
+{
+  title: "Number three of three seeded posts",
+  description: "This is the third seeded post",
+  author: null
+}
 ];
 
 
@@ -77,12 +108,32 @@ databaseConnector(databaseURL).then(() => {
         console.log("Old db data deleted.");
     }
 }).then(async () => {
-    // Add new data into the database.
-    await Role.insertMany(roles);
+  // Add new data into the database.
+  // Store the new documents as a variable for use later.
+  let rolesCreated = await Role.insertMany(roles);
 
-    console.log("New db data created.");
+  // Iterate through the users array, using for-of to enable async/await.
+  for (const user of users) {
+    // Set the password of the user.
+    user.password = await hashString("SomeRandomPassword1");
+    // Pick a random role from the roles created and set that for the user.
+    user.role = rolesCreated[Math.floor(Math.random() * rolesCreated.length)].id;
+  }
+  // Save the users to the database.
+  let usersCreated = await User.insertMany(users);
+
+  // Same again for posts;
+  // pick a random user and assign that user as the author of a post.
+  for (const post of posts) {
+    post.author = usersCreated[Math.floor(Math.random() * usersCreated.length)].id;
+  }
+  // Then save the posts to the database.
+  let postsCreated = await Post.insertMany(posts);
+
+  // Log modified to list all data created.
+  console.log("New DB data created.\n" + JSON.stringify({roles: rolesCreated, users: usersCreated, posts: postsCreated}, null, 4));
 }).then(() => {
-    // Disconnect from the database.
-    mongoose.connection.close();
-    console.log("db seed connection closed.")
+  // Disconnect from the database.
+  mongoose.connection.close();
+  console.log("DB seed connection closed.")
 });
